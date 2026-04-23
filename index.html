@@ -566,7 +566,9 @@ function loadLocal(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(
 function calcStateFromEvents(events, atTime){
   const now = atTime || Date.now();
   const todayStr = DATESTR(new Date(now));
-  const midnightToday = new Date(todayStr).getTime();
+  // use local midnight, not UTC midnight
+  const _d=new Date();_d.setHours(0,0,0,0);
+  const midnightToday = _d.getTime();
 
   let alignerIn = false, elasticIn = false;
   let alignerStart = null, elasticStart = null;
@@ -1040,10 +1042,21 @@ function renderSessions(st){
 
   // current live session
   if(stCurrent.alignerIn&&stCurrent.alignerStart){
-    const start=new Date(Math.max(stCurrent.alignerStart,new Date(today).getTime())).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const midnightToday=new Date(today).getTime();
     const label=stCurrent.elasticIn?'Invisalign + elastics':'Invisalign only';
-    const spanning=stCurrent.spansFromYesterday?' (from yesterday)':'';
-    merged.unshift({start:Date.now(),html:`<div class="session-entry" style="border:1px solid var(--green);border-radius:var(--r-sm);"><span class="session-time" style="color:var(--green);">${label} · ${start}${spanning} – now</span><span class="session-dur" style="color:var(--green);">live</span></div>`});
+    if(stCurrent.spansFromYesterday){
+      // yesterday's completed portion (session start → midnight)
+      const yd=new Date();yd.setDate(yd.getDate()-1);
+      const ydStr=yd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      const origStart=new Date(stCurrent.alignerStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      const ydDur=Math.floor((midnightToday-stCurrent.alignerStart)/1000);
+      merged.push({start:stCurrent.alignerStart,dur:ydDur,html:`<div class="session-entry" style="border:1px solid rgba(167,139,250,0.3);border-radius:var(--r-sm);"><span class="session-time" style="color:var(--text2);">${label} · ${ydStr} ${origStart} – 12:00 AM</span><span class="session-dur" style="color:var(--accent);">${fmtDur(ydDur)}</span></div>`});
+      // today's live portion (midnight → now)
+      merged.unshift({start:midnightToday,html:`<div class="session-entry" style="border:1px solid var(--green);border-radius:var(--r-sm);"><span class="session-time" style="color:var(--green);">${label} · 12:00 AM – now</span><span class="session-dur" style="color:var(--green);">live</span></div>`});
+    } else {
+      const start=new Date(stCurrent.alignerStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      merged.unshift({start:Date.now(),html:`<div class="session-entry" style="border:1px solid var(--green);border-radius:var(--r-sm);"><span class="session-time" style="color:var(--green);">${label} · ${start} – now</span><span class="session-dur" style="color:var(--green);">live</span></div>`});
+    }
   }
 
   // sort most recent first, filter out zero/blip entries under 5 seconds
