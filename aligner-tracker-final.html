@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aligner">
+<meta name="theme-color" content="#0a0a0f">
+<title>Aligner — Invisalign Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0f0f5;--text2:#9090a8;--text3:#55556a;
+  --accent:#a78bfa;--accent2:#7c3aed;--accent-dim:rgba(167,139,250,0.12);
+  --green:#34d399;--green-dim:rgba(52,211,153,0.12);
+  --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,0.12);
+  --teal:#22d3ee;--teal-dim:rgba(34,211,238,0.1);
+  --pink:#f472b6;--pink-dim:rgba(244,114,182,0.1);
+  --font-mono:'DM Mono',monospace;--font:'DM Sans',sans-serif;
+  --r:14px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5;overflow-x:hidden;}
+body{max-width:430px;margin:0 auto;min-height:100vh;}
+.app-header{padding:52px 20px 0;}
+.app-header-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.app-logo{font-family:var(--font-mono);font-size:11px;letter-spacing:0.15em;color:var(--text3);text-transform:uppercase;}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.week-chip{font-family:var(--font-mono);font-size:11px;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:99px;}
+.sync-status{font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:99px;display:flex;align-items:center;gap:4px;}
+.sync-status.synced{color:var(--green);background:var(--green-dim);}
+.sync-status.syncing{color:var(--amber);background:var(--amber-dim);}
+.sync-status.offline{color:var(--text3);background:var(--bg3);}
+.sync-status.error{color:var(--red);background:var(--red-dim);}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.live-clock{font-family:var(--font-mono);font-size:10px;color:var(--text3);text-align:right;}
+.app-title{font-size:28px;font-weight:300;margin-top:14px;letter-spacing:-0.02em;}
+.app-title span{color:var(--accent);}
+.progress-section{margin-top:20px;}
+.progress-meta{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-bottom:8px;}
+.progress-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+.main{padding:24px 20px 120px;}
+.section-header{font-family:var(--font-mono);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
+
+/* DAY SUMMARY CARD */
+.day-summary{border-radius:var(--r);padding:16px;margin-bottom:20px;border:1px solid;}
+.day-summary.great{background:rgba(52,211,153,0.06);border-color:rgba(52,211,153,0.3);}
+.day-summary.good{background:rgba(167,139,250,0.06);border-color:rgba(167,139,250,0.3);}
+.day-summary.miss{background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.2);}
+.day-summary-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.day-summary-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;}
+.day-summary.great .day-summary-label{color:var(--green);}
+.day-summary.good .day-summary-label{color:var(--accent);}
+.day-summary.miss .day-summary-label{color:var(--red);}
+.day-summary-dismiss{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:0;}
+.day-summary-title{font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.day-summary-sub{font-size:13px;color:var(--text2);}
+.day-summary-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.day-summary-stat{background:rgba(0,0,0,0.2);border-radius:var(--r-sm);padding:10px;text-align:center;}
+.day-summary-stat-val{font-family:var(--font-mono);font-size:16px;color:var(--text);}
+.day-summary-stat-label{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* SPANNING SESSION BANNER */
+.spanning-banner{background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.3);border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+.spanning-icon{font-size:22px;}
+.spanning-text{font-size:13px;color:var(--text2);line-height:1.5;}
+.spanning-text strong{color:var(--green);font-weight:500;}
+
+/* CHANGE BANNER */
+.change-banner{border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;border:1px solid;}
+.change-banner.soon{background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.25);}
+.change-banner.today{background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.35);}
+.change-banner.future{background:var(--bg2);border-color:var(--border);}
+.change-banner-left{display:flex;flex-direction:column;gap:3px;}
+.change-banner-label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;}
+.change-banner.soon .change-banner-label{color:var(--amber);}
+.change-banner.today .change-banner-label{color:var(--accent);}
+.change-banner.future .change-banner-label{color:var(--text3);}
+.change-banner-title{font-size:15px;font-weight:500;}
+.change-banner-sub{font-size:12px;color:var(--text3);}
+.change-banner-days{font-family:var(--font-mono);font-size:28px;line-height:1;}
+.change-banner.soon .change-banner-days{color:var(--amber);}
+.change-banner.today .change-banner-days{color:var(--accent);}
+.change-banner.future .change-banner-days{color:var(--text2);}
+
+/* STREAKS */
+.streak-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.streak-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.streak-card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.streak-card-icon{font-size:16px;line-height:1;}
+.streak-card-title{font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);}
+.streak-card-body{display:flex;align-items:baseline;gap:6px;}
+.streak-val{font-family:var(--font-mono);font-size:26px;line-height:1;}
+.streak-val.fire{color:var(--amber);}
+.streak-val.elastic{color:var(--pink);}
+.streak-val.best{color:var(--text2);}
+.streak-unit{font-family:var(--font-mono);font-size:11px;color:var(--text3);}
+.streak-target{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* WEEKLY */
+.weekly-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:24px;}
+.weekly-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.weekly-title{font-family:var(--font-mono);font-size:11px;color:var(--text2);letter-spacing:0.08em;text-transform:uppercase;}
+.weekly-range{font-family:var(--font-mono);font-size:10px;color:var(--text3);}
+.weekly-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.weekly-stat{background:var(--bg3);border-radius:var(--r-sm);padding:10px 8px;text-align:center;}
+.weekly-stat-val{font-family:var(--font-mono);font-size:15px;line-height:1;}
+.weekly-stat-val.good{color:var(--green);}
+.weekly-stat-val.warn{color:var(--amber);}
+.weekly-stat-val.bad{color:var(--red);}
+.weekly-stat-label{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.3;}
+.weekly-wear-rows{display:flex;flex-direction:column;gap:6px;}
+.weekly-wear-row{display:flex;align-items:center;gap:8px;}
+.weekly-wear-label{font-family:var(--font-mono);font-size:10px;color:var(--text3);width:52px;flex-shrink:0;}
+.weekly-wear-days{display:flex;gap:3px;flex:1;}
+.weekly-day{flex:1;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;}
+.weekly-day.hit-aligner{background:var(--green-dim);color:var(--green);}
+.weekly-day.hit-elastic{background:var(--pink-dim);color:var(--pink);}
+.weekly-day.miss{background:var(--red-dim);color:var(--red);}
+.weekly-day.no-data{background:var(--bg3);color:var(--text3);}
+.weekly-day.future{background:var(--bg3);color:var(--text3);opacity:0.4;}
+
+/* TIMERS */
+.timer-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.timer-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:border-color 0.2s,background 0.2s;user-select:none;}
+.timer-card.active{border-color:var(--green);background:rgba(52,211,153,0.04);}
+.timer-card.inactive{border-color:var(--red);background:rgba(248,113,113,0.04);}
+.timer-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:0.06;transform:translate(20px,-20px);}
+.timer-card.active::before{background:var(--green);}
+.timer-card.inactive::before{background:var(--red);}
+.timer-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);font-family:var(--font-mono);margin-bottom:10px;}
+.timer-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;}
+.timer-card.active .timer-dot{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+.timer-card.inactive .timer-dot{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.timer-status{font-size:12px;font-weight:500;}
+.timer-card.active .timer-status{color:var(--green);}
+.timer-card.inactive .timer-status{color:var(--red);}
+.timer-time{font-family:var(--font-mono);font-size:22px;color:var(--text);margin:6px 0 4px;letter-spacing:-0.02em;}
+.timer-sub{font-size:11px;color:var(--text3);}
+.timer-tap{font-size:10px;color:var(--text3);margin-top:10px;font-family:var(--font-mono);}
+
+.today-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+.today-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;text-align:center;}
+.today-stat-val{font-family:var(--font-mono);font-size:18px;color:var(--text);}
+.today-stat-val.on-track{color:var(--green);}
+.today-stat-val.off-track{color:var(--red);}
+.today-stat-label{font-size:10px;color:var(--text3);margin-top:3px;letter-spacing:0.08em;text-transform:uppercase;}
+
+.session-entry{background:var(--bg3);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;}
+.session-time{color:var(--text2);}
+.session-dur{color:var(--accent);}
+
+/* LOG FORM */
+.log-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:24px;}
+.field{margin-bottom:16px;}
+.field:last-child{margin-bottom:0;}
+.field-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;display:block;font-family:var(--font-mono);}
+.field input,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font);font-size:14px;padding:10px 12px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+.field input:focus,.field textarea:focus{border-color:var(--accent);}
+.field textarea{min-height:90px;resize:vertical;line-height:1.6;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.mood-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 4px;text-align:center;cursor:pointer;transition:all 0.15s;}
+.mood-btn-emoji{font-size:18px;display:block;}
+.mood-btn-label{font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--font-mono);}
+.mood-btn.selected{border-color:var(--accent);background:var(--accent-dim);}
+.mood-btn.selected .mood-btn-label{color:var(--accent);}
+.pain-row{display:flex;align-items:center;gap:12px;}
+.pain-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--bg4);border-radius:2px;outline:none;border:none;padding:0;}
+.pain-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.pain-val{font-family:var(--font-mono);font-size:16px;min-width:24px;text-align:right;}
+.toggle-row{display:flex;gap:8px;flex-wrap:wrap;}
+.toggle-pill{background:var(--bg3);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:12px;color:var(--text2);cursor:pointer;transition:all 0.15s;user-select:none;}
+.toggle-pill.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+.save-btn{width:100%;background:var(--accent2);color:white;border:none;border-radius:var(--r-sm);padding:14px;font-size:14px;font-weight:500;font-family:var(--font);cursor:pointer;transition:background 0.2s,transform 0.1s;margin-top:4px;}
+.save-btn:hover{background:var(--accent);}
+.save-btn:active{transform:scale(0.98);}
+
+/* CALENDAR */
+.cal-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.cal-title{font-family:var(--font-mono);font-size:13px;color:var(--text);}
+.cal-arrow{background:none;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:border-color 0.15s;}
+.cal-arrow:hover{border-color:var(--accent);color:var(--accent);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center;padding:4px 0 8px;}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;font-family:var(--font-mono);font-size:12px;color:var(--text2);position:relative;cursor:pointer;transition:background 0.15s;gap:2px;}
+.cal-day:hover:not(.empty){background:var(--bg4);}
+.cal-day.empty{cursor:default;}
+.cal-day.today .day-num{color:var(--accent);font-weight:500;}
+.cal-day.other-month{opacity:0.3;}
+.cal-day.change-day{background:var(--teal-dim);}
+.cal-day.change-day .day-num{color:var(--teal);}
+.cal-bars{display:flex;gap:2px;width:75%;}
+.cal-bar{flex:1;height:3px;border-radius:2px;background:var(--bg4);}
+.cal-bar.great{background:var(--green);}
+.cal-bar.good{background:var(--amber);}
+.cal-bar.low{background:var(--red);}
+.cal-bar.elastic-great{background:var(--pink);}
+.cal-bar.elastic-ok{background:rgba(244,114,182,0.4);}
+.cal-bar.elastic-low{background:var(--red);}
+.checkin-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;top:3px;right:3px;}
+.change-dot{width:4px;height:4px;border-radius:50%;background:var(--teal);position:absolute;top:3px;left:3px;}
+.day-num{font-size:12px;line-height:1;}
+.cal-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.cal-legend-item{display:flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10px;color:var(--text3);}
+
+/* DAY DETAIL */
+.day-detail{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin-bottom:16px;display:none;}
+.day-detail.show{display:block;}
+.day-detail-title{font-family:var(--font-mono);font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:0.06em;}
+.change-day-badge{background:var(--teal-dim);border:1px solid rgba(34,211,238,0.2);border-radius:99px;padding:4px 10px;font-family:var(--font-mono);font-size:10px;color:var(--teal);display:inline-block;margin-bottom:10px;}
+.day-wear-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.day-wear-stat{background:var(--bg4);border-radius:var(--r-sm);padding:12px;text-align:center;}
+.day-wear-stat-label{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:0.06em;text-transform:uppercase;}
+.day-wear-val{font-family:var(--font-mono);font-size:20px;line-height:1;}
+.day-wear-val.hit{color:var(--green);}
+.day-wear-val.hit-elastic{color:var(--pink);}
+.day-wear-val.miss{color:var(--red);}
+.day-wear-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.day-entry-item{padding:8px 0;border-top:1px solid var(--border);}
+.day-entry-time{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:4px;}
+.day-entry-note{font-size:13px;color:var(--text2);line-height:1.5;}
+.no-data{font-size:12px;color:var(--text3);font-family:var(--font-mono);padding:6px 0;}
+
+/* ENTRIES */
+.entry{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;}
+.entry-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.entry-week{font-family:var(--font-mono);font-size:12px;color:var(--accent);}
+.entry-date{font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-top:2px;}
+.entry-time-stamp{font-family:var(--font-mono);font-size:10px;color:var(--text3);}
+.entry-note{font-size:13px;color:var(--text2);line-height:1.6;margin:8px 0;}
+.entry-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tag{font-size:10px;padding:3px 8px;border-radius:99px;font-family:var(--font-mono);}
+.tag-purple{background:var(--accent-dim);color:var(--accent);}
+.tag-green{background:var(--green-dim);color:var(--green);}
+.tag-red{background:var(--red-dim);color:var(--red);}
+.tag-amber{background:var(--amber-dim);color:var(--amber);}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;}
+.del-btn:hover{color:var(--red);}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;font-family:var(--font-mono);}
+
+/* SETTINGS */
+.settings-section{margin-bottom:24px;}
+.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-size:13px;color:var(--text);}
+.settings-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.settings-row input,.settings-row select{background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--font-mono);font-size:13px;padding:6px 10px;text-align:right;width:110px;outline:none;-webkit-appearance:none;}
+.settings-row input:focus{border-color:var(--accent);}
+.settings-note{font-size:12px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.6;font-family:var(--font-mono);}
+
+/* COMMUNITY */
+.community-loading{display:flex;flex-direction:column;align-items:center;padding:40px 20px;}
+.community-spinner{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.post-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;position:relative;}
+.post-card-accent{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--r) 0 0 var(--r);background:var(--accent);}
+.post-meta{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.post-week-badge{background:var(--accent-dim);color:var(--accent);padding:2px 8px;border-radius:99px;font-size:10px;}
+.post-text{font-size:14px;color:var(--text2);line-height:1.7;}
+.post-upvotes{display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:10px;}
+.post-error{text-align:center;padding:30px 20px;color:var(--text3);font-size:13px;font-family:var(--font-mono);line-height:1.8;}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(10,10,15,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:10px 0 max(16px,env(safe-area-inset-bottom));display:flex;justify-content:space-around;z-index:100;}
+.nav-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 12px;transition:color 0.15s;}
+.nav-btn.active{color:var(--accent);}
+.nav-icon{font-size:18px;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 20px;border-radius:99px;font-size:13px;font-family:var(--font-mono);opacity:0;transition:opacity 0.2s;pointer-events:none;z-index:200;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-header-top">
+    <span class="app-logo">Aligner</span>
+    <div class="header-right">
+      <span class="week-chip" id="week-chip">Week 14</span>
+      <div class="sync-status offline" id="sync-status"><div class="sync-dot"></div><span id="sync-text">offline</span></div>
+      <div class="live-clock" id="live-clock"></div>
+    </div>
+  </div>
+  <div class="app-title">Your <span>smile</span><br>is in progress.</div>
+  <div class="progress-section">
+    <div class="progress-meta"><span id="prog-label">Week 14 of 68</span><span id="prog-pct">20%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:20%"></div></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- TODAY -->
+  <div class="tab-content active" id="tab-today">
+
+    <!-- DAY SUMMARY (shown when new day detected) -->
+    <div id="day-summary-card" style="display:none;"></div>
+
+    <!-- SPANNING SESSION BANNER -->
+    <div id="spanning-banner" style="display:none;"></div>
+
+    <div class="change-banner future" id="change-banner">
+      <div class="change-banner-left">
+        <div class="change-banner-label" id="change-label">Next aligner change</div>
+        <div class="change-banner-title" id="change-title">This Friday</div>
+        <div class="change-banner-sub" id="change-sub">Keep wearing consistently</div>
+      </div>
+      <div class="change-banner-days" id="change-days">—</div>
+    </div>
+
+    <div class="section-header">Streaks</div>
+    <div class="streak-grid">
+      <div class="streak-card">
+        <div class="streak-card-header"><span class="streak-card-icon">🔥</span><span class="streak-card-title">Aligner streak</span></div>
+        <div class="streak-card-body"><div class="streak-val fire" id="streak-aligner">0</div><div class="streak-unit">days</div></div>
+        <div class="streak-target" id="streak-aligner-target">target: 22h/day</div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-card-header"><span class="streak-card-icon">💪</span><span class="streak-card-title">Elastic streak</span></div>
+        <div class="streak-card-body"><div class="streak-val elastic" id="streak-elastic">0</div><div class="streak-unit">days</div></div>
+        <div class="streak-target" id="streak-elastic-target">target: 20h/day</div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-card-header"><span class="streak-card-icon">🏆</span><span class="streak-card-title">Best aligner</span></div>
+        <div class="streak-card-body"><div class="streak-val best" id="best-aligner">0</div><div class="streak-unit">days</div></div>
+        <div class="streak-target">all-time best</div>
+      </div>
+      <div class="streak-card">
+        <div class="streak-card-header"><span class="streak-card-icon">🏅</span><span class="streak-card-title">Best elastic</span></div>
+        <div class="streak-card-body"><div class="streak-val best" id="best-elastic">0</div><div class="streak-unit">days</div></div>
+        <div class="streak-target">all-time best</div>
+      </div>
+    </div>
+
+    <div class="section-header">This week</div>
+    <div class="weekly-card" id="weekly-card"></div>
+
+    <div class="section-header">Live tracking</div>
+    <div id="off-timer-banner" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--r);padding:12px 16px;margin-bottom:12px;display:none;">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--red);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Aligner out</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:13px;color:var(--text2);">Off since <span id="off-since-time">—</span></div>
+        <div style="font-family:var(--font-mono);font-size:22px;color:var(--red);" id="off-timer-display">00:00</div>
+      </div>
+    </div>
+    <div class="timer-section">
+      <div class="timer-card" id="aligner-card" onclick="toggleAligner()">
+        <div class="timer-label"><span class="timer-dot"></span><span class="timer-status" id="aligner-status">In</span></div>
+        <div class="timer-time" id="aligner-time">00:00</div>
+        <div class="timer-sub">current session</div>
+        <div class="timer-tap">tap to toggle</div>
+      </div>
+      <div class="timer-card" id="elastic-card" onclick="toggleElastic()">
+        <div class="timer-label"><span class="timer-dot"></span><span class="timer-status" id="elastic-status">In</span></div>
+        <div class="timer-time" id="elastic-time">00:00</div>
+        <div class="timer-sub">current session</div>
+        <div class="timer-tap">tap to toggle</div>
+      </div>
+    </div>
+
+    <div class="today-row">
+      <div class="today-stat"><div class="today-stat-val" id="stat-wear">0m</div><div class="today-stat-label">Aligner today</div></div>
+      <div class="today-stat"><div class="today-stat-val" id="stat-elastic-wear">0m</div><div class="today-stat-label">Elastic today</div></div>
+      <div class="today-stat"><div class="today-stat-val" id="stat-left-today">22h</div><div class="today-stat-label">Aligner left</div></div>
+    </div>
+
+    <div class="section-header">Today's sessions</div>
+    <div id="sessions-list" style="margin-bottom:24px;"></div>
+
+    <div class="section-header">Log check-in</div>
+    <div class="log-card">
+      <div class="field-row">
+        <div class="field"><label class="field-label">Week</label><input type="number" id="f-week" min="1" max="200"></div>
+        <div class="field"><label class="field-label">Aligner #</label><input type="number" id="f-aligner" min="1" max="200" placeholder="e.g. 28"></div>
+      </div>
+      <div class="field">
+        <label class="field-label">Mood</label>
+        <div class="mood-grid">
+          <div class="mood-btn" onclick="selectMood(this,'🤩','amazing')"><span class="mood-btn-emoji">🤩</span><span class="mood-btn-label">amazing</span></div>
+          <div class="mood-btn" onclick="selectMood(this,'😊','good')"><span class="mood-btn-emoji">😊</span><span class="mood-btn-label">good</span></div>
+          <div class="mood-btn" onclick="selectMood(this,'😐','okay')"><span class="mood-btn-emoji">😐</span><span class="mood-btn-label">okay</span></div>
+          <div class="mood-btn" onclick="selectMood(this,'😬','rough')"><span class="mood-btn-emoji">😬</span><span class="mood-btn-label">rough</span></div>
+          <div class="mood-btn" onclick="selectMood(this,'😩','bad')"><span class="mood-btn-emoji">😩</span><span class="mood-btn-label">bad</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Pain / discomfort</label>
+        <div class="pain-row">
+          <input type="range" min="0" max="10" step="1" value="0" id="f-pain" oninput="document.getElementById('f-pain-val').textContent=this.value;updatePainColor(this.value)">
+          <span class="pain-val" id="f-pain-val">0</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Elastics</label>
+        <div class="toggle-row">
+          <div class="toggle-pill" id="pill-day" onclick="togglePill(this)">Daytime</div>
+          <div class="toggle-pill" id="pill-night" onclick="togglePill(this)">Night</div>
+          <div class="toggle-pill" id="pill-full" onclick="togglePill(this)">Full time</div>
+          <div class="toggle-pill" id="pill-skip" onclick="togglePill(this)">Skipped</div>
+        </div>
+      </div>
+      <div class="field"><label class="field-label">Notes</label><textarea id="f-note" placeholder="How's it going? Pain, progress, anything notable..."></textarea></div>
+      <button class="save-btn" onclick="saveEntry()">Save check-in</button>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="tab-content" id="tab-calendar">
+    <div class="section-header">Wear history</div>
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="calPrev()">&#8592;</button>
+        <span class="cal-title" id="cal-title"></span>
+        <button class="cal-arrow" onclick="calNext()">&#8594;</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend">
+        <div class="cal-legend-item"><div style="width:14px;height:3px;border-radius:2px;background:var(--green);"></div>aligner ✓</div>
+        <div class="cal-legend-item"><div style="width:14px;height:3px;border-radius:2px;background:var(--pink);"></div>elastic ✓</div>
+        <div class="cal-legend-item"><div style="width:14px;height:3px;border-radius:2px;background:var(--red);"></div>missed</div>
+        <div class="cal-legend-item"><div style="width:6px;height:6px;border-radius:50%;background:var(--accent);"></div>check-in</div>
+        <div class="cal-legend-item"><div style="width:10px;height:10px;border-radius:2px;background:var(--teal-dim);border:1px solid rgba(34,211,238,0.3);"></div>change</div>
+      </div>
+    </div>
+    <div class="day-detail" id="day-detail">
+      <div class="day-detail-title" id="day-detail-title"></div>
+      <div id="day-change-badge"></div>
+      <div class="day-wear-grid" id="day-wear-grid"></div>
+      <div id="day-detail-entries"></div>
+    </div>
+    <div class="section-header">All check-ins</div>
+    <div id="entries-list"></div>
+  </div>
+
+<!-- SETTINGS -->
+  <div class="tab-content" id="tab-settings">
+    <div class="settings-section">
+      <div class="section-header">Treatment</div>
+      <div class="settings-card">
+        <div class="settings-row"><div><div class="settings-label">Current week</div></div><input type="number" id="s-week" min="1" max="300" onchange="saveSettings()"></div>
+        <div class="settings-row"><div><div class="settings-label">Total weeks</div></div><input type="number" id="s-total" min="1" max="300" onchange="saveSettings()"></div>
+        <div class="settings-row"><div><div class="settings-label">Start date</div><div class="settings-sub">First aligner day</div></div><input type="date" id="s-start" style="width:130px;" onchange="saveSettings()"></div>
+        <div class="settings-row"><div><div class="settings-label">Aligner target</div><div class="settings-sub">Hours per day</div></div><input type="number" id="s-target" min="1" max="24" onchange="saveSettings()"></div>
+        <div class="settings-row"><div><div class="settings-label">Elastic target</div><div class="settings-sub">Hours per day</div></div><input type="number" id="s-etarget" min="1" max="24" onchange="saveSettings()"></div>
+        <div class="settings-row">
+          <div><div class="settings-label">Change day</div><div class="settings-sub">Day you switch aligners</div></div>
+          <select id="s-change-day" onchange="saveSettings()">
+            <option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option>
+            <option value="3">Wednesday</option><option value="4">Thursday</option><option value="5" selected>Friday</option><option value="6">Saturday</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="section-header">Sync</div>
+      <div class="settings-card">
+        <div class="settings-row"><div><div class="settings-label">Sync status</div></div><div style="font-family:var(--font-mono);font-size:12px;color:var(--green)" id="s-sync-status">—</div></div>
+        <div class="settings-row"><div><div class="settings-label">Last synced</div></div><div style="font-family:var(--font-mono);font-size:12px;color:var(--text3)" id="s-last-sync">never</div></div>
+        <div class="settings-row"><div><div class="settings-label">Force sync</div></div><button onclick="pullFromCloud(true)" style="background:var(--bg4);border:1px solid var(--border);color:var(--text);border-radius:var(--r-sm);padding:6px 12px;font-family:var(--font-mono);font-size:11px;cursor:pointer;">Sync now</button></div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="section-header">Stats</div>
+      <div class="settings-card">
+        <div class="settings-row"><div><div class="settings-label">Total check-ins</div></div><div style="font-family:var(--font-mono);font-size:13px;color:var(--accent)" id="s-count">0</div></div>
+        <div class="settings-row"><div><div class="settings-label">Days tracked</div></div><div style="font-family:var(--font-mono);font-size:13px;color:var(--accent)" id="s-days">0</div></div>
+        <div class="settings-row"><div><div class="settings-label">Aligner streak</div></div><div style="font-family:var(--font-mono);font-size:13px;color:var(--amber)" id="s-astreak">0 days</div></div>
+        <div class="settings-row"><div><div class="settings-label">Elastic streak</div></div><div style="font-family:var(--font-mono);font-size:13px;color:var(--pink)" id="s-estreak">0 days</div></div>
+        <div class="settings-row"><div><div class="settings-label">Export data</div></div><button onclick="exportData()" style="background:var(--bg4);border:1px solid var(--border);color:var(--text);border-radius:var(--r-sm);padding:6px 12px;font-family:var(--font-mono);font-size:11px;cursor:pointer;">Export</button></div>
+        <div class="settings-row"><div><div class="settings-label">Clear all data</div><div class="settings-sub">Cannot be undone</div></div><button onclick="clearAll()" style="background:var(--red-dim);border:1px solid var(--red);color:var(--red);border-radius:var(--r-sm);padding:6px 12px;font-family:var(--font-mono);font-size:11px;cursor:pointer;">Clear</button></div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="section-header">Install as app</div>
+      <div class="settings-card">
+        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div class="settings-label">Add to home screen</div>
+          <div class="settings-sub" style="line-height:1.7;">iOS: tap Share in Safari → "Add to Home Screen"<br>Android: tap browser menu → "Install app"</div>
+        </div>
+      </div>
+    </div>
+    <p class="settings-note">Data synced via Supabase cloud.<br>Works on all your devices.</p>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-today" onclick="switchTab('today')"><span class="nav-icon">⏱</span>today</button>
+  <button class="nav-btn" id="nav-calendar" onclick="switchTab('calendar')"><span class="nav-icon">📅</span>calendar</button>
+  <button class="nav-btn" id="nav-settings" onclick="switchTab('settings')"><span class="nav-icon">⚙</span>settings</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══ SUPABASE ═══
+const SB_URL='https://skingxxknsavzwnbiuvz.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNraW5neHhrbnNhdnp3bmJpdXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MjMyNzMsImV4cCI6MjA5MjE5OTI3M30.6VQIb0GyUOk87OQj4kBucxqIVaOxsCtYfyE67g-VLjw';
+const SB_H={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function cloudGet(key){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/aligner_data?key=eq.${encodeURIComponent(key)}&select=value`,{headers:SB_H});
+    if(!r.ok) return null;
+    const d=await r.json();
+    return d.length?JSON.parse(d[0].value):null;
+  }catch(e){return null;}
+}
+
+async function cloudSet(key,value){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/aligner_data?on_conflict=key`,{
+      method:'POST',
+      headers:{...SB_H,'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({key,value:JSON.stringify(value)})
+    });
+    return r.ok;
+  }catch(e){return false;}
+}
+
+async function cloudDelete(key){
+  try{await fetch(`${SB_URL}/rest/v1/aligner_data?key=eq.${encodeURIComponent(key)}`,{method:'DELETE',headers:SB_H});}catch(e){}
+}
+
+function setSyncStatus(s,t){
+  const el=document.getElementById('sync-status');
+  el.className='sync-status '+s;
+  document.getElementById('sync-text').textContent=t;
+  const ss=document.getElementById('s-sync-status');
+  if(ss)ss.textContent=t;
+}
+
+// ═══ STATE ═══
+let cfg={week:14,total:68,start:'',target:22,etarget:20,changeDay:5};
+let entries=[];
+let dailyLog={}; // {dateStr: {alignerHrs, elasticHrs}}
+// EVENT LOG — the source of truth for timers
+// [{id, type:'aligner_in'|'aligner_out'|'elastic_in'|'elastic_out', time:timestamp}]
+let toggleEvents=[];
+let selectedMood={emoji:'',label:''};
+let alignerOffStart=null; // when aligner was taken off
+let offNotifTimeout=null;
+let offNotifInterval=null;
+let timerInterval=null;
+let calYear,calMonth;
+let syncTimeout=null;
+let lastSyncTime=null;
+let dismissedSummaryDate=null;
+
+const DATESTR=(d)=>{const x=d||new Date();return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+const KEYS={cfg:'aligner-cfg2',entries:'aligner-entries2',daily:'aligner-daily2',events:'aligner-events2'};
+
+function saveLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function loadLocal(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+
+// ═══ EVENT-BASED TIMER ENGINE ═══
+// Calculate current state from event log
+function calcStateFromEvents(events, atTime){
+  const now = atTime || Date.now();
+  const todayStr = DATESTR(new Date(now));
+  const midnightToday = new Date(todayStr).getTime();
+
+  let alignerIn = false, elasticIn = false;
+  let alignerStart = null, elasticStart = null;
+  let alignerSecsToday = 0, elasticSecsToday = 0;
+  let sessions = []; // for display
+
+  // Process ALL events chronologically to get current in/out state
+  // But only count wear time for TODAY
+  const sorted = [...events].sort((a,b) => a.time - b.time);
+
+  for(const ev of sorted){
+    if(ev.type === 'aligner_in'){
+      alignerIn = true;
+      alignerStart = ev.time;
+    } else if(ev.type === 'aligner_out'){
+      if(alignerIn && alignerStart){
+        const sessionStart = alignerStart;
+        const sessionEnd = ev.time;
+        // count seconds that fall within today
+        const effectiveStart = Math.max(sessionStart, midnightToday);
+        const effectiveEnd = Math.min(sessionEnd, now);
+        if(effectiveEnd > effectiveStart){
+          alignerSecsToday += Math.floor((effectiveEnd - effectiveStart) / 1000);
+        }
+        if(sessionStart >= midnightToday){
+          sessions.push({type:'aligner', start:sessionStart, end:sessionEnd, dur:Math.floor((sessionEnd-sessionStart)/1000)});
+        }
+      }
+      alignerIn = false;
+      alignerStart = null;
+    } else if(ev.type === 'elastic_in'){
+      elasticIn = true;
+      elasticStart = ev.time;
+    } else if(ev.type === 'elastic_out'){
+      if(elasticIn && elasticStart){
+        const sessionStart = elasticStart;
+        const sessionEnd = ev.time;
+        const effectiveStart = Math.max(sessionStart, midnightToday);
+        const effectiveEnd = Math.min(sessionEnd, now);
+        if(effectiveEnd > effectiveStart){
+          elasticSecsToday += Math.floor((effectiveEnd - effectiveStart) / 1000);
+        }
+        if(sessionStart >= midnightToday){
+          sessions.push({type:'elastic', start:sessionStart, end:sessionEnd, dur:Math.floor((sessionEnd-sessionStart)/1000)});
+        }
+      }
+      elasticIn = false;
+      elasticStart = null;
+    }
+  }
+
+  // Add ongoing session time
+  if(alignerIn && alignerStart){
+    const effectiveStart = Math.max(alignerStart, midnightToday);
+    alignerSecsToday += Math.floor((now - effectiveStart) / 1000);
+  }
+  if(elasticIn && elasticStart){
+    const effectiveStart = Math.max(elasticStart, midnightToday);
+    elasticSecsToday += Math.floor((now - effectiveStart) / 1000);
+  }
+
+  // check if aligner spans midnight (started yesterday, still in)
+  const spansFromYesterday = alignerIn && alignerStart && alignerStart < midnightToday;
+
+  return {
+    alignerIn, elasticIn, alignerStart, elasticStart,
+    alignerSecsToday, elasticSecsToday,
+    sessions, spansFromYesterday
+  };
+}
+
+// Calculate wear for a specific past date
+function calcWearForDate(dateStr, events){
+  const dayStart = new Date(dateStr).getTime();
+  const dayEnd = dayStart + 86400000;
+  const sorted = [...events].sort((a,b) => a.time - b.time);
+
+  let alignerIn=false, alignerStart=null, elasticIn=false, elasticStart=null;
+  let alignerSecs=0, elasticSecs=0;
+
+  // replay events up to end of day
+  for(const ev of sorted){
+    if(ev.time > dayEnd) break;
+    if(ev.type==='aligner_in'){alignerIn=true;alignerStart=ev.time;}
+    else if(ev.type==='aligner_out'){
+      if(alignerIn&&alignerStart){
+        const s=Math.max(alignerStart,dayStart),e=Math.min(ev.time,dayEnd);
+        if(e>s) alignerSecs+=Math.floor((e-s)/1000);
+      }
+      alignerIn=false;alignerStart=null;
+    }
+    else if(ev.type==='elastic_in'){elasticIn=true;elasticStart=ev.time;}
+    else if(ev.type==='elastic_out'){
+      if(elasticIn&&elasticStart){
+        const s=Math.max(elasticStart,dayStart),e=Math.min(ev.time,dayEnd);
+        if(e>s) elasticSecs+=Math.floor((e-s)/1000);
+      }
+      elasticIn=false;elasticStart=null;
+    }
+  }
+  // if still in at end of day
+  if(alignerIn&&alignerStart){
+    const s=Math.max(alignerStart,dayStart),e=dayEnd;
+    if(e>s) alignerSecs+=Math.floor((e-s)/1000);
+  }
+  if(elasticIn&&elasticStart){
+    const s=Math.max(elasticStart,dayStart),e=dayEnd;
+    if(e>s) elasticSecs+=Math.floor((e-s)/1000);
+  }
+  return{alignerHrs:alignerSecs/3600, elasticHrs:elasticSecs/3600};
+}
+
+// rebuild dailyLog from events for all days that have events
+function rebuildDailyLog(){
+  const days=new Set();
+  for(const ev of toggleEvents){
+    days.add(DATESTR(new Date(ev.time)));
+    // also add next day for spanning sessions
+    const next=new Date(ev.time);next.setDate(next.getDate()+1);
+    days.add(DATESTR(next));
+  }
+  const today=DATESTR();
+  for(const day of days){
+    if(day>today) continue;
+    const wear=calcWearForDate(day,toggleEvents);
+    if(wear.alignerHrs>0||wear.elasticHrs>0){
+      dailyLog[day]={alignerHrs:parseFloat(wear.alignerHrs.toFixed(2)),elasticHrs:parseFloat(wear.elasticHrs.toFixed(2))};
+    }
+  }
+  // also update today live
+  const st=calcStateFromEvents(toggleEvents);
+  dailyLog[today]={alignerHrs:parseFloat((st.alignerSecsToday/3600).toFixed(2)),elasticHrs:parseFloat((st.elasticSecsToday/3600).toFixed(2))};
+  saveLocal(KEYS.daily,dailyLog);
+}
+
+// ═══ TOGGLE ACTIONS ═══
+function addToggleEvent(type){
+  const ev={id:Date.now()+'_'+Math.random().toString(36).slice(2), type, time:Date.now()};
+  toggleEvents.push(ev);
+  saveLocal(KEYS.events,toggleEvents);
+  rebuildDailyLog();
+  scheduleSync();
+  return ev;
+}
+
+function toggleAligner(){
+  const st=calcStateFromEvents(toggleEvents);
+  if(st.alignerIn){
+    addToggleEvent('aligner_out');
+    const st2=calcStateFromEvents(toggleEvents);
+    if(st2.elasticIn) addToggleEvent('elastic_out');
+    startOffTimer();
+  } else {
+    addToggleEvent('aligner_in');
+    stopOffTimer();
+  }
+  updateUI();
+}
+
+function toggleElastic(){
+  const st=calcStateFromEvents(toggleEvents);
+  if(st.elasticIn){
+    addToggleEvent('elastic_out');
+  } else {
+    if(!calcStateFromEvents(toggleEvents).alignerIn){
+      showToast('Put your aligner in first!');
+      return;
+    }
+    addToggleEvent('elastic_in');
+  }
+  updateUI();
+}
+
+// ═══ CLOUD SYNC ═══
+function scheduleSync(){
+  if(syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout=setTimeout(pushToCloud,2000);
+}
+
+async function pushToCloud(){
+  setSyncStatus('syncing','syncing...');
+  const ok1=await cloudSet('cfg',cfg);
+  const ok2=await cloudSet('entries',entries);
+  const ok3=await cloudSet('toggleEvents',toggleEvents);
+  const ok4=await cloudSet('dailyLog',dailyLog);
+  if(ok1&&ok2&&ok3&&ok4){
+    lastSyncTime=new Date();
+    setSyncStatus('synced','synced');
+    const el=document.getElementById('s-last-sync');
+    if(el) el.textContent=lastSyncTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  } else {
+    setSyncStatus('error','sync failed');
+  }
+}
+
+async function pullFromCloud(showMsg){
+  setSyncStatus('syncing','syncing...');
+  const [rCfg,rEntries,rEvents,rDaily]=await Promise.all([
+    cloudGet('cfg'),cloudGet('entries'),cloudGet('toggleEvents'),cloudGet('dailyLog')
+  ]);
+  let changed=false;
+  if(rCfg){cfg={...{week:14,total:68,start:'',target:22,etarget:20,changeDay:5},...rCfg};saveLocal(KEYS.cfg,cfg);changed=true;}
+  if(rEntries){entries=rEntries;saveLocal(KEYS.entries,entries);changed=true;}
+  if(rEvents){
+    // merge events — take union by id
+    const localIds=new Set(toggleEvents.map(e=>e.id));
+    const newEvents=rEvents.filter(e=>!localIds.has(e.id));
+    if(newEvents.length>0){
+      toggleEvents=[...toggleEvents,...newEvents].sort((a,b)=>a.time-b.time);
+      saveLocal(KEYS.events,toggleEvents);
+      rebuildDailyLog();
+      changed=true;
+    }
+  }
+  if(rDaily&&!rEvents){dailyLog=rDaily;saveLocal(KEYS.daily,dailyLog);changed=true;}
+  if(changed){
+    applySettings();renderSettings();renderEntries();renderCalendar();
+    renderWeeklySummary();renderStreaks();updateUI();
+  }
+  lastSyncTime=new Date();
+  setSyncStatus('synced','synced');
+  const el=document.getElementById('s-last-sync');
+  if(el) el.textContent=lastSyncTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(showMsg) showToast('Synced!');
+}
+
+// Poll every 8 seconds — just pull new toggle events
+async function pollEvents(){
+  const rEvents=await cloudGet('toggleEvents');
+  if(!rEvents) return;
+  const localIds=new Set(toggleEvents.map(e=>e.id));
+  const newEvents=rEvents.filter(e=>!localIds.has(e.id));
+  if(newEvents.length>0){
+    toggleEvents=[...toggleEvents,...newEvents].sort((a,b)=>a.time-b.time);
+    saveLocal(KEYS.events,toggleEvents);
+    rebuildDailyLog();
+    updateUI();
+    showToast('Synced from other device');
+  }
+}
+
+// ═══ INIT ═══
+function loadAllLocal(){
+  cfg={...{week:14,total:68,start:'',target:22,etarget:20,changeDay:5},...loadLocal(KEYS.cfg,{})};
+  entries=loadLocal(KEYS.entries,[]);
+  dailyLog=loadLocal(KEYS.daily,{});
+  toggleEvents=loadLocal(KEYS.events,[]);
+  dismissedSummaryDate=loadLocal('dismissed-summary','');
+  const now=new Date();
+  calYear=now.getFullYear();calMonth=now.getMonth();
+}
+
+async function init(){
+  loadAllLocal();
+  applySettings();renderSettings();renderEntries();renderCalendar();
+  renderChangeBanner();renderWeeklySummary();renderStreaks();
+  updateUI();
+  checkDaySummary();
+  document.getElementById('f-week').value=cfg.week;
+  await pullFromCloud(false);
+  requestNotifPermission();
+  // restore off timer if aligner is currently out
+  const initSt=calcStateFromEvents(toggleEvents);
+  if(!initSt.alignerIn){
+    // find when it was last taken out
+    const outEvents=toggleEvents.filter(e=>e.type==='aligner_out');
+    if(outEvents.length>0){
+      const lastOut=outEvents[outEvents.length-1];
+      alignerOffStart=lastOut.time;
+      document.getElementById('off-timer-banner').style.display='block';
+      document.getElementById('off-since-time').textContent=
+        new Date(alignerOffStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      // schedule notification for remaining time
+      const elapsed=Date.now()-alignerOffStart;
+      const remaining=30*60*1000-elapsed;
+      if(offNotifTimeout) clearTimeout(offNotifTimeout);
+      if(remaining>0){
+        offNotifTimeout=setTimeout(()=>{
+          sendNotif('Aligner reminder','You have been without your aligner for 30 minutes!');
+          offNotifInterval=setInterval(()=>{
+            const mins=Math.floor((Date.now()-alignerOffStart)/60000);
+            sendNotif('Aligner reminder',`Still out — ${mins} minutes without your aligner`);
+          },5*60*1000);
+        },remaining);
+      } else {
+        offNotifInterval=setInterval(()=>{
+          const mins=Math.floor((Date.now()-alignerOffStart)/60000);
+          sendNotif('Aligner reminder',`Still out — ${mins} minutes without your aligner`);
+        },5*60*1000);
+      }
+    }
+  }
+  startTicker();
+  setInterval(pollEvents,8000);
+  setInterval(()=>{rebuildDailyLog();renderWeeklySummary();renderStreaks();renderChangeBanner();},60000);
+}
+
+function startTicker(){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval=setInterval(tick,1000);tick();
+}
+
+// ═══ TICK ═══
+function tick(){
+  const now=Date.now(),nd=new Date();
+  document.getElementById('live-clock').textContent=
+    nd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+
+    nd.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  const st=calcStateFromEvents(toggleEvents,now);
+
+  // current session timer
+  const alignerSessionSecs=st.alignerIn&&st.alignerStart?Math.floor((now-Math.max(st.alignerStart,new Date(DATESTR()).getTime()))/1000):0;
+  const elasticSessionSecs=st.elasticIn&&st.elasticStart?Math.floor((now-Math.max(st.elasticStart,new Date(DATESTR()).getTime()))/1000):0;
+
+  document.getElementById('aligner-time').textContent=fmtDur(alignerSessionSecs);
+  document.getElementById('elastic-time').textContent=fmtDur(elasticSessionSecs);
+
+  const aHrs=st.alignerSecsToday/3600;
+  const eHrs=st.elasticSecsToday/3600;
+  const rem=Math.max(0,cfg.target-aHrs);
+
+  document.getElementById('stat-wear').textContent=fmtHours(aHrs);
+  document.getElementById('stat-wear').className='today-stat-val '+(aHrs>=cfg.target?'on-track':'');
+  document.getElementById('stat-elastic-wear').textContent=fmtHours(eHrs);
+  document.getElementById('stat-elastic-wear').className='today-stat-val '+(eHrs>=cfg.etarget?'on-track':'');
+  document.getElementById('stat-left-today').textContent=fmtHours(rem);
+  document.getElementById('stat-left-today').className='today-stat-val '+(rem===0?'on-track':rem<2?'':'off-track');
+  // update off timer display
+  if(alignerOffStart){
+    const offSecs=Math.floor((now-alignerOffStart)/1000);
+    const el=document.getElementById('off-timer-display');
+    if(el) el.textContent=fmtDur(offSecs);
+  }
+}
+
+function updateUI(){
+  const st=calcStateFromEvents(toggleEvents);
+  // update cards
+  document.getElementById('aligner-card').className='timer-card '+(st.alignerIn?'active':'inactive');
+  document.getElementById('elastic-card').className='timer-card '+(st.elasticIn?'active':'inactive');
+  document.getElementById('aligner-status').textContent=st.alignerIn?'In':'Out';
+  document.getElementById('elastic-status').textContent=st.elasticIn?'In':'Out';
+  // spanning session banner
+  renderSpanningBanner(st);
+  // sessions
+  renderSessions(st);
+}
+
+// ═══ DAY SUMMARY ═══
+function checkDaySummary(){
+  const today=DATESTR();
+  // find yesterday
+  const yd=new Date();yd.setDate(yd.getDate()-1);
+  const yesterday=DATESTR(yd);
+  if(dismissedSummaryDate===yesterday) return;
+
+  const wear=calcWearForDate(yesterday,toggleEvents);
+  if(wear.alignerHrs===0&&wear.elasticHrs===0) return; // nothing to show
+
+  // check if aligner is still in from yesterday (spanning)
+  const st=calcStateFromEvents(toggleEvents);
+  const isSpanning=st.spansFromYesterday;
+
+  const hit=wear.alignerHrs>=cfg.target;
+  let cls=hit?'great':'miss';
+  let emoji=hit?'🎉':'😬';
+  let title='';
+  let sub='';
+
+  if(isSpanning){
+    cls='great';emoji='😴';
+    title='Aligner still in — nice!';
+    sub='You wore it through the night. Yesterday: '+fmtHours(wear.alignerHrs)+' aligner, '+fmtHours(wear.elasticHrs)+' elastic.';
+  }else if(hit){
+    title='Great day yesterday!';
+    sub='You hit your wear target. Keep it up!';
+  }else{
+    title='Yesterday was a bit low';
+    sub='Try to hit '+cfg.target+'h today. You got this!';
+  }
+
+  const card=document.getElementById('day-summary-card');
+  card.style.display='block';
+  card.innerHTML=`<div class="day-summary ${cls}">
+    <div class="day-summary-header">
+      <div>
+        <div class="day-summary-label">${yd.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'})}</div>
+        <div class="day-summary-title">${emoji} ${title}</div>
+        <div class="day-summary-sub">${sub}</div>
+      </div>
+      <button class="day-summary-dismiss" onclick="dismissSummary('${yesterday}')">✕</button>
+    </div>
+    <div class="day-summary-stats">
+      <div class="day-summary-stat"><div class="day-summary-stat-val">${fmtHours(wear.alignerHrs)}</div><div class="day-summary-stat-label">aligner worn</div></div>
+      <div class="day-summary-stat"><div class="day-summary-stat-val">${fmtHours(wear.elasticHrs)}</div><div class="day-summary-stat-label">elastic worn</div></div>
+    </div>
+  </div>`;
+}
+
+function dismissSummary(date){
+  dismissedSummaryDate=date;
+  saveLocal('dismissed-summary',date);
+  document.getElementById('day-summary-card').style.display='none';
+}
+
+function renderSpanningBanner(st){
+  const banner=document.getElementById('spanning-banner');
+  if(!st||!st.spansFromYesterday){banner.style.display='none';return;}
+  const yd=new Date();yd.setDate(yd.getDate()-1);
+  banner.style.display='block';
+  banner.innerHTML=`<div class="spanning-banner">
+    <div class="spanning-icon">🌙</div>
+    <div class="spanning-text"><strong>Session spans midnight</strong><br>Your aligner has been in since ${new Date(st.alignerStart).toLocaleDateString('en-US',{month:'short',day:'numeric'})} at ${new Date(st.alignerStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}. Today's wear counts from midnight.</div>
+  </div>`;
+}
+
+// ═══ SESSIONS DISPLAY ═══
+function renderSessions(st){
+  const stCurrent=st||calcStateFromEvents(toggleEvents);
+  const el=document.getElementById('sessions-list');
+  const today=DATESTR();
+  const todaySessions=stCurrent.sessions.filter(s=>DATESTR(new Date(s.start))===today||DATESTR(new Date(s.end))===today);
+
+  if(!todaySessions.length&&!(stCurrent.alignerIn&&stCurrent.alignerStart)){
+    el.innerHTML='<div class="empty" style="padding:16px 0;">No sessions yet today</div>';return;
+  }
+
+  const alignerSessions=todaySessions.filter(s=>s.type==='aligner');
+  const elasticSessions=todaySessions.filter(s=>s.type==='elastic');
+
+  // For each aligner session, split it by elastic on/off events to show sub-sessions
+  const merged=[];
+  alignerSessions.forEach(a=>{
+    // find all elastic start/end events within this aligner session
+    const relevantElastics=elasticSessions.filter(e=>e.start>=a.start&&e.end<=a.end);
+    if(!relevantElastics.length){
+      const start=new Date(a.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      const end=new Date(a.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      merged.push({start:a.start,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${start} – ${end}</span><span class="session-dur">${fmtDur(a.dur)}</span></div>`});
+    } else {
+      // build segments: aligner-only gaps + aligner+elastic overlaps
+      let cursor=a.start;
+      const events=[];
+      relevantElastics.forEach(e=>{events.push({t:e.start,type:'ein'});events.push({t:e.end,type:'eout'});});
+      events.sort((x,y)=>x.t-y.t);
+      events.forEach(ev=>{
+        if(ev.type==='ein'&&cursor<ev.t){
+          const s=new Date(cursor).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+          const e=new Date(ev.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+          const dur=Math.floor((ev.t-cursor)/1000);
+          merged.push({start:cursor,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
+          cursor=ev.t;
+        } else if(ev.type==='eout'){
+          const s=new Date(cursor).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+          const e=new Date(ev.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+          const dur=Math.floor((ev.t-cursor)/1000);
+          merged.push({start:cursor,html:`<div class="session-entry"><span class="session-time">Invisalign + elastics · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
+          cursor=ev.t;
+        }
+      });
+      // remaining aligner time after last elastic event
+      if(cursor<a.end){
+        const s=new Date(cursor).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        const e=new Date(a.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        const dur=Math.floor((a.end-cursor)/1000);
+        merged.push({start:cursor,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
+      }
+    }
+  });
+
+  // current live session
+  if(stCurrent.alignerIn&&stCurrent.alignerStart){
+    const start=new Date(Math.max(stCurrent.alignerStart,new Date(today).getTime())).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const label=stCurrent.elasticIn?'Invisalign + elastics':'Invisalign only';
+    const spanning=stCurrent.spansFromYesterday?' (from yesterday)':'';
+    merged.unshift({start:Date.now(),html:`<div class="session-entry" style="border:1px solid var(--green);border-radius:var(--r-sm);"><span class="session-time" style="color:var(--green);">${label} · ${start}${spanning} – now</span><span class="session-dur" style="color:var(--green);">live</span></div>`});
+  }
+
+  el.innerHTML=merged.map(m=>m.html).join('');
+}
+
+// ═══ STREAKS ═══
+function calcStreaks(){
+  let aStreak=0,eStreak=0,aBest=0,eBest=0,aCur=0,eCur=0;
+  const d=new Date();
+  for(let i=0;i<730;i++){
+    const ds=DATESTR(d);
+    const data=dailyLog[ds];
+    const aHit=data&&data.alignerHrs>=cfg.target;
+    const eHit=data&&data.elasticHrs>=cfg.etarget;
+    if(aHit){aCur++;if(i===0||aStreak>0)aStreak=aCur;}else{if(i===0)aStreak=0;aBest=Math.max(aBest,aCur);aCur=0;}
+    aBest=Math.max(aBest,aCur);
+    if(eHit){eCur++;if(i===0||eStreak>0)eStreak=eCur;}else{if(i===0)eStreak=0;eBest=Math.max(eBest,eCur);eCur=0;}
+    eBest=Math.max(eBest,eCur);
+    d.setDate(d.getDate()-1);
+  }
+  return{aStreak,eStreak,aBest:Math.max(aBest,aStreak),eBest:Math.max(eBest,eStreak)};
+}
+
+function renderStreaks(){
+  const{aStreak,eStreak,aBest,eBest}=calcStreaks();
+  document.getElementById('streak-aligner').textContent=aStreak;
+  document.getElementById('streak-elastic').textContent=eStreak;
+  document.getElementById('best-aligner').textContent=aBest;
+  document.getElementById('best-elastic').textContent=eBest;
+  document.getElementById('streak-aligner-target').textContent='target: '+cfg.target+'h/day';
+  document.getElementById('streak-elastic-target').textContent='target: '+cfg.etarget+'h/day';
+  document.getElementById('s-astreak').textContent=aStreak+' days';
+  document.getElementById('s-estreak').textContent=eStreak+' days';
+}
+
+// ═══ CHANGE BANNER ═══
+function renderChangeBanner(){
+  const now=new Date(),day=now.getDay(),cd=parseInt(cfg.changeDay)||5;
+  let diff=cd-day;if(diff<=0)diff+=7;
+  const next=new Date(now);next.setDate(now.getDate()+diff);
+  const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const banner=document.getElementById('change-banner');
+  if(diff===0){
+    banner.className='change-banner today';
+    document.getElementById('change-label').textContent='Change day';
+    document.getElementById('change-title').textContent='Switch your aligner today!';
+    document.getElementById('change-sub').textContent='Put in your new aligner';
+    document.getElementById('change-days').textContent='🦷';
+  }else if(diff<=2){
+    banner.className='change-banner soon';
+    document.getElementById('change-label').textContent='Aligner change soon';
+    document.getElementById('change-title').textContent='This '+dayNames[cd];
+    document.getElementById('change-sub').textContent='Keep wearing consistently';
+    document.getElementById('change-days').textContent=diff+'d';
+  }else{
+    banner.className='change-banner future';
+    document.getElementById('change-label').textContent='Next aligner change';
+    document.getElementById('change-title').textContent=dayNames[cd]+', '+next.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    document.getElementById('change-sub').textContent='Keep wearing consistently';
+    document.getElementById('change-days').textContent=diff+'d';
+  }
+}
+
+// ═══ WEEKLY SUMMARY ═══
+function renderWeeklySummary(){
+  const el=document.getElementById('weekly-card');
+  const now=new Date(),dow=now.getDay(),mOff=dow===0?-6:1-dow;
+  const monday=new Date(now);monday.setDate(now.getDate()+mOff);monday.setHours(0,0,0,0);
+  const weekDays=Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d;});
+  const shortDay=['M','T','W','T','F','S','S'];
+  let totalA=0,totalE=0,daysHitA=0,daysHitE=0,daysData=0;
+
+  const aRows=weekDays.map((d,i)=>{
+    const ds=DATESTR(d),isToday=d.toDateString()===now.toDateString(),isFuture=d>now&&!isToday;
+    const data=dailyLog[ds];
+    if(isFuture) return`<div class="weekly-day future">${shortDay[i]}</div>`;
+    if(!data) return`<div class="weekly-day no-data">${shortDay[i]}</div>`;
+    totalA+=data.alignerHrs;daysData++;
+    if(data.alignerHrs>=cfg.target)daysHitA++;
+    return`<div class="weekly-day ${data.alignerHrs>=cfg.target?'hit-aligner':'miss'}">${shortDay[i]}</div>`;
+  }).join('');
+
+  const eRows=weekDays.map((d,i)=>{
+    const ds=DATESTR(d),isToday=d.toDateString()===now.toDateString(),isFuture=d>now&&!isToday;
+    const data=dailyLog[ds];
+    if(isFuture) return`<div class="weekly-day future">${shortDay[i]}</div>`;
+    if(!data) return`<div class="weekly-day no-data">${shortDay[i]}</div>`;
+    totalE+=data.elasticHrs;
+    if(data.elasticHrs>=cfg.etarget)daysHitE++;
+    return`<div class="weekly-day ${data.elasticHrs>=cfg.etarget?'hit-elastic':'miss'}">${shortDay[i]}</div>`;
+  }).join('');
+
+  const avgA=daysData?totalA/daysData:0,avgE=daysData?totalE/daysData:0;
+  const mondayStr=monday.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const sundayStr=weekDays[6].toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  el.innerHTML=`
+    <div class="weekly-header"><span class="weekly-title">This week</span><span class="weekly-range">${mondayStr} – ${sundayStr}</span></div>
+    <div class="weekly-grid">
+      <div class="weekly-stat"><div class="weekly-stat-val ${avgA>=cfg.target?'good':avgA>=(cfg.target*0.8)?'warn':'bad'}">${fmtHours(avgA)}</div><div class="weekly-stat-label">avg aligner</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-val ${avgE>=cfg.etarget?'good':avgE>=(cfg.etarget*0.8)?'warn':'bad'}">${fmtHours(avgE)}</div><div class="weekly-stat-label">avg elastic</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-val ${daysHitA>=6?'good':daysHitA>=4?'warn':'bad'}">${daysHitA}/${daysData||7}</div><div class="weekly-stat-label">aligner days</div></div>
+      <div class="weekly-stat"><div class="weekly-stat-val ${daysHitE>=6?'good':daysHitE>=4?'warn':'bad'}">${daysHitE}/${daysData||7}</div><div class="weekly-stat-label">elastic days</div></div>
+    </div>
+    <div class="weekly-wear-rows">
+      <div class="weekly-wear-row"><div class="weekly-wear-label">Aligner</div><div class="weekly-wear-days">${aRows}</div></div>
+      <div class="weekly-wear-row"><div class="weekly-wear-label">Elastics</div><div class="weekly-wear-days">${eRows}</div></div>
+    </div>`;
+}
+
+// ═══ CHECK-IN ═══
+function selectMood(el,emoji,label){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');selectedMood={emoji,label};}
+function togglePill(el){el.classList.toggle('on');}
+function updatePainColor(val){document.getElementById('f-pain-val').style.color=val>=7?'var(--red)':val>=4?'var(--amber)':'var(--text)';}
+
+function saveEntry(){
+  const note=document.getElementById('f-note').value.trim();
+  const week=parseInt(document.getElementById('f-week').value)||cfg.week;
+  const aligner=parseInt(document.getElementById('f-aligner').value)||null;
+  const pain=parseInt(document.getElementById('f-pain').value);
+  const elastics=[];
+  ['pill-day','pill-night','pill-full','pill-skip'].forEach(id=>{if(document.getElementById(id).classList.contains('on'))elastics.push(document.getElementById(id).textContent.toLowerCase());});
+  const st=calcStateFromEvents(toggleEvents);
+  entries.unshift({id:Date.now(),date:new Date().toISOString(),week,aligner,note,pain,elastics,mood:selectedMood,wearHrs:parseFloat((st.alignerSecsToday/3600).toFixed(1)),elasticHrs:parseFloat((st.elasticSecsToday/3600).toFixed(1))});
+  saveLocal(KEYS.entries,entries);
+  document.getElementById('f-note').value='';document.getElementById('f-pain').value=0;
+  document.getElementById('f-pain-val').textContent='0';document.getElementById('f-pain-val').style.color='';
+  ['pill-day','pill-night','pill-full','pill-skip'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));selectedMood={emoji:'',label:''};
+  renderEntries();renderCalendar();renderWeeklySummary();
+  document.getElementById('s-count').textContent=entries.length;
+  scheduleSync();showToast('Check-in saved!');switchTab('calendar');
+}
+
+function renderEntries(){
+  const el=document.getElementById('entries-list');
+  document.getElementById('s-count').textContent=entries.length;
+  if(!entries.length){el.innerHTML='<div class="empty">No entries yet.<br>Log your first check-in.</div>';return;}
+  el.innerHTML=entries.map(e=>{
+    const d=new Date(e.date);
+    const dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const timeStr=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const painTag=e.pain>0?`<span class="tag ${e.pain>=7?'tag-red':'tag-amber'}">pain ${e.pain}/10</span>`:'';
+    const wearTag=e.wearHrs?`<span class="tag tag-green">${fmtHours(e.wearHrs)} aligner</span>`:'';
+    const ewearTag=e.elasticHrs?`<span class="tag tag-purple">${fmtHours(e.elasticHrs)} elastic</span>`:'';
+    const alignerTag=e.aligner?`<span class="tag tag-purple">aligner #${e.aligner}</span>`:'';
+    const elasticTags=e.elastics.map(x=>`<span class="tag tag-purple">${x} elastics</span>`).join('');
+    const moodEmoji=e.mood?.emoji?`<span style="font-size:16px;margin-right:4px;">${e.mood.emoji}</span>`:'';
+    return`<div class="entry">
+      <div class="entry-header">
+        <div><div class="entry-week">Week ${e.week} ${moodEmoji}</div><div class="entry-date">${dateStr}</div><div class="entry-time-stamp">${timeStr}</div></div>
+        <button class="del-btn" onclick="deleteEntry(${e.id})">✕</button>
+      </div>
+      ${e.note?`<div class="entry-note">${e.note}</div>`:''}
+      <div class="entry-tags">${alignerTag}${painTag}${wearTag}${ewearTag}${elasticTags}</div>
+    </div>`;
+  }).join('');
+}
+
+function deleteEntry(id){
+  entries=entries.filter(e=>e.id!==id);
+  saveLocal(KEYS.entries,entries);renderEntries();renderCalendar();scheduleSync();showToast('Entry removed');
+}
+
+// ═══ CALENDAR ═══
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function renderCalendar(){
+  document.getElementById('cal-title').textContent=MONTHS[calMonth]+' '+calYear;
+  const today=new Date(),firstDay=new Date(calYear,calMonth,1).getDay();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const daysInPrev=new Date(calYear,calMonth,0).getDate();
+  const entryDates=new Set(entries.map(e=>e.date.slice(0,10)));
+  let html=DAYS.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<firstDay;i++) html+=`<div class="cal-day other-month empty"><span class="day-num">${daysInPrev-firstDay+1+i}</span></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+    const isChange=new Date(calYear,calMonth,d).getDay()===parseInt(cfg.changeDay||5);
+    const data=dailyLog[ds];
+    const hasCheckin=entryDates.has(ds);
+    let aBar='',eBar='';
+    if(data){
+      const ap=data.alignerHrs/cfg.target,ep=data.elasticHrs/cfg.etarget;
+      aBar=ap>=1?'great':ap>=0.8?'good':'low';
+      eBar=ep>=1?'elastic-great':ep>=0.8?'elastic-ok':'elastic-low';
+    }
+    html+=`<div class="cal-day${isToday?' today':''}${isChange?' change-day':''}" onclick="showDayDetail('${ds}',${isChange})">
+      ${hasCheckin?'<div class="checkin-dot"></div>':''}${isChange?'<div class="change-dot"></div>':''}
+      <span class="day-num">${d}</span>
+      <div class="cal-bars"><div class="cal-bar ${aBar}"></div><div class="cal-bar ${eBar}"></div></div>
+    </div>`;
+  }
+  const rem=(firstDay+daysInMonth)%7;
+  if(rem!==0) for(let i=1;i<=7-rem;i++) html+=`<div class="cal-day other-month empty"><span class="day-num">${i}</span></div>`;
+  document.getElementById('cal-grid').innerHTML=html;
+  document.getElementById('day-detail').classList.remove('show');
+  document.getElementById('s-days').textContent=Object.keys(dailyLog).length;
+}
+
+function showDayDetail(ds,isChange){
+  const data=dailyLog[ds];
+  const dayEntries=entries.filter(e=>e.date.slice(0,10)===ds);
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('day-detail-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('day-change-badge').innerHTML=isChange?`<div class="change-day-badge">Aligner change day</div>`:'';
+  const grid=document.getElementById('day-wear-grid');
+  if(data){
+    const aHit=data.alignerHrs>=cfg.target,eHit=data.elasticHrs>=cfg.etarget;
+    grid.innerHTML=`
+      <div class="day-wear-stat"><div class="day-wear-stat-label">Aligner</div><div class="day-wear-val ${aHit?'hit':'miss'}">${fmtHours(data.alignerHrs)}</div><div class="day-wear-sub">${aHit?'✓ hit '+cfg.target+'h':'✗ missed '+cfg.target+'h'}</div></div>
+      <div class="day-wear-stat"><div class="day-wear-stat-label">Elastics</div><div class="day-wear-val ${eHit?'hit-elastic':'miss'}">${fmtHours(data.elasticHrs||0)}</div><div class="day-wear-sub">${eHit?'✓ hit '+cfg.etarget+'h':'✗ missed '+cfg.etarget+'h'}</div></div>`;
+  }else{
+    grid.innerHTML=`<div class="no-data" style="grid-column:1/-1;">No wear data for this day</div>`;
+  }
+  document.getElementById('day-detail-entries').innerHTML=!dayEntries.length
+    ?`<div class="day-entry-item"><div class="no-data">No check-in logged this day</div></div>`
+    :dayEntries.map(e=>`<div class="day-entry-item">
+        <div class="day-entry-time">${new Date(e.date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} ${e.mood?.emoji||''}${e.pain>0?' · pain '+e.pain+'/10':''}</div>
+        <div class="day-entry-note">${e.note||'<span style="color:var(--text3)">No note written</span>'}</div>
+      </div>`).join('');
+  document.getElementById('day-detail').classList.add('show');
+  document.getElementById('day-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ═══ SETTINGS ═══
+function applySettings(){
+  const pct=Math.min(100,Math.round((cfg.week/cfg.total)*100));
+  document.getElementById('week-chip').textContent='Week '+cfg.week;
+  document.getElementById('prog-label').textContent='Week '+cfg.week+' of '+cfg.total;
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+}
+
+function renderSettings(){
+  document.getElementById('s-week').value=cfg.week;
+  document.getElementById('s-total').value=cfg.total;
+  document.getElementById('s-start').value=cfg.start||'';
+  document.getElementById('s-target').value=cfg.target;
+  document.getElementById('s-etarget').value=cfg.etarget;
+  document.getElementById('s-change-day').value=cfg.changeDay||5;
+  document.getElementById('s-count').textContent=entries.length;
+  document.getElementById('s-days').textContent=Object.keys(dailyLog).length;
+}
+
+function saveSettings(){
+  cfg.week=parseInt(document.getElementById('s-week').value)||14;
+  cfg.total=parseInt(document.getElementById('s-total').value)||68;
+  cfg.start=document.getElementById('s-start').value;
+  cfg.target=parseInt(document.getElementById('s-target').value)||22;
+  cfg.etarget=parseInt(document.getElementById('s-etarget').value)||20;
+  cfg.changeDay=parseInt(document.getElementById('s-change-day').value);
+  saveLocal(KEYS.cfg,cfg);
+  applySettings();document.getElementById('f-week').value=cfg.week;
+  renderCalendar();renderChangeBanner();renderWeeklySummary();renderStreaks();
+  scheduleSync();showToast('Settings saved');
+}
+
+
+
+// ═══ DATA ═══
+function exportData(){
+  const blob=new Blob([JSON.stringify({config:cfg,entries,dailyLog,toggleEvents},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='aligner-data-v16.json';a.click();
+}
+
+function clearAll(){
+  if(!confirm('Delete ALL data everywhere? Cannot be undone.')) return;
+  entries=[];dailyLog={};toggleEvents=[];
+  saveLocal(KEYS.entries,entries);saveLocal(KEYS.daily,dailyLog);saveLocal(KEYS.events,toggleEvents);
+  Promise.all([cloudDelete('entries'),cloudDelete('dailyLog'),cloudDelete('toggleEvents')]);
+  renderEntries();renderCalendar();renderWeeklySummary();renderStreaks();updateUI();
+  document.getElementById('s-count').textContent=0;
+  document.getElementById('s-days').textContent=0;
+  showToast('Data cleared everywhere');
+}
+
+function switchTab(tab){
+  ['today','calendar','settings'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    document.getElementById('nav-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+function fmtDur(sec){
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return h>0?String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'):String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function fmtHours(hrs){
+  const h=Math.floor(hrs),m=Math.round((hrs-h)*60);
+  if(h===0&&m===0) return '0m';
+  if(h===0) return m+'m';
+  if(m===0) return h+'h';
+  return h+'h '+m+'m';
+}
+
+function startOffTimer(){
+  alignerOffStart=Date.now();
+  const banner=document.getElementById('off-timer-banner');
+  if(banner) banner.style.display='block';
+  document.getElementById('off-since-time').textContent=
+    new Date(alignerOffStart).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  // notification after 30 minutes
+  if(offNotifTimeout) clearTimeout(offNotifTimeout);
+  if(offNotifInterval) clearInterval(offNotifInterval);
+  offNotifTimeout=setTimeout(()=>{
+    sendNotif('Aligner reminder','You have been without your aligner for 30 minutes!');
+    // then every 5 minutes
+    offNotifInterval=setInterval(()=>{
+      const mins=Math.floor((Date.now()-alignerOffStart)/60000);
+      sendNotif('Aligner reminder',`Still out — ${mins} minutes without your aligner`);
+    },5*60*1000);
+  },30*60*1000);
+}
+
+function stopOffTimer(){
+  alignerOffStart=null;
+  const banner=document.getElementById('off-timer-banner');
+  if(banner) banner.style.display='none';
+  if(offNotifTimeout) clearTimeout(offNotifTimeout);
+  if(offNotifInterval) clearInterval(offNotifInterval);
+  offNotifTimeout=null;offNotifInterval=null;
+}
+
+function sendNotif(title,body){
+  if('Notification' in window&&Notification.permission==='granted'){
+    new Notification(title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦷</text></svg>'});
+  } else {
+    showToast(body);
+  }
+}
+
+function requestNotifPermission(){
+  if('Notification' in window&&Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+init();
+</script>
+</body>
+</html>
