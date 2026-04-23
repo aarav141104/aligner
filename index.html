@@ -1006,7 +1006,7 @@ function renderSessions(st){
     if(!relevantElastics.length){
       const start=new Date(a.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       const end=new Date(a.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      merged.push({start:a.start,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${start} – ${end}</span><span class="session-dur">${fmtDur(a.dur)}</span></div>`});
+      merged.push({start:a.start,dur:a.dur,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${start} – ${end}</span><span class="session-dur">${fmtDur(a.dur)}</span></div>`});
     } else {
       // build segments: aligner-only gaps + aligner+elastic overlaps
       let cursor=a.start;
@@ -1018,13 +1018,13 @@ function renderSessions(st){
           const s=new Date(cursor).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
           const e=new Date(ev.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
           const dur=Math.floor((ev.t-cursor)/1000);
-          merged.push({start:cursor,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
+          merged.push({start:cursor,dur,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
           cursor=ev.t;
         } else if(ev.type==='eout'){
           const s=new Date(cursor).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
           const e=new Date(ev.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
           const dur=Math.floor((ev.t-cursor)/1000);
-          merged.push({start:cursor,html:`<div class="session-entry"><span class="session-time">Invisalign + elastics · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
+          merged.push({start:cursor,dur,html:`<div class="session-entry"><span class="session-time">Invisalign + elastics · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
           cursor=ev.t;
         }
       });
@@ -1033,7 +1033,7 @@ function renderSessions(st){
         const s=new Date(cursor).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
         const e=new Date(a.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
         const dur=Math.floor((a.end-cursor)/1000);
-        merged.push({start:cursor,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
+        merged.push({start:cursor,dur,html:`<div class="session-entry"><span class="session-time">Invisalign only · ${s} – ${e}</span><span class="session-dur">${fmtDur(dur)}</span></div>`});
       }
     }
   });
@@ -1046,7 +1046,11 @@ function renderSessions(st){
     merged.unshift({start:Date.now(),html:`<div class="session-entry" style="border:1px solid var(--green);border-radius:var(--r-sm);"><span class="session-time" style="color:var(--green);">${label} · ${start}${spanning} – now</span><span class="session-dur" style="color:var(--green);">live</span></div>`});
   }
 
-  el.innerHTML=merged.map(m=>m.html).join('');
+  // sort most recent first, filter out zero/blip entries under 5 seconds
+  el.innerHTML=merged
+    .filter(m=>!m.dur||m.dur>=5)
+    .sort((a,b)=>b.start-a.start)
+    .map(m=>m.html).join('');
 }
 
 // ═══ STREAKS ═══
